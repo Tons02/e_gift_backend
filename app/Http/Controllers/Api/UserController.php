@@ -100,9 +100,9 @@ class UserController extends Controller
 
     public function archived(Request $request, $id)
     {
-        // if ($id == auth('sanctum')->user()->id) {
-        //     return $this->responseUnprocessable('', 'Unable to archive. You cannot archive your own account.');
-        // }
+        if ($id == auth('sanctum')->user()->id) {
+            return $this->responseUnprocessable('', 'Unable to archive. You cannot archive your own account.');
+        }
 
         $user = User::withTrashed()->find($id);
 
