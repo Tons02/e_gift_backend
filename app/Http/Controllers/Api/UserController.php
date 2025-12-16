@@ -18,7 +18,7 @@ class UserController extends Controller
         $status = $request->query('status');
         $pagination = $request->query('pagination');
 
-        $User = User::when($status === "inactive", function ($query) {
+        $User = User::with('businessTypes')->when($status === "inactive", function ($query) {
             $query->onlyTrashed();
         })
             ->orderBy('created_at', 'desc')
@@ -35,48 +35,74 @@ class UserController extends Controller
 
     public function store(UserRequest $request)
     {
-        $create_user = User::create([
-            "name" => $request["name"],
-            "role_type" => $request["role_type"],
-            "username" => $request["username"],
-            "password" => $request["username"],
+        $user = User::create([
+            'name'      => $request->name,
+            'role_type' => $request->role_type,
+            'username'  => $request->username,
+            'password'  => bcrypt($request->username), // ❗ hash it
         ]);
 
-        return $this->responseCreated('User Successfully Created', $create_user);
+        if ($request->filled('business_type_id')) {
+            $user->businessTypes()->attach($request->business_type_id);
+        }
+
+        return $this->responseCreated(
+            'User Successfully Created',
+            $user->load('businessTypes')
+        );
     }
+
 
     public function update(UserRequest $request, $id)
     {
-        $userID = User::find($id);
+        $user = User::with('businessTypes')->find($id);
 
-        if (!$userID) {
-            return $this->responseUnprocessable('Invalid ID provided for updating. Please check the ID and try again.', '');
+        if (!$user) {
+            return $this->responseUnprocessable(
+                'Invalid ID provided for updating. Please check the ID and try again.',
+                ''
+            );
         }
 
-        if (CashAdvance::where('request_by_id', $id)->where('status', 'For Approval')->exists()) {
-            return $this->responseUnprocessable('Unable to update. This user has associated cash advance records.', '');
+        // Update user fields safely
+        $user->fill([
+            'name'      => $request->name,
+            'role_type' => $request->role_type,
+            'username'  => $request->username,
+        ]);
+
+        // Optional password update
+        if ($request->filled('password')) {
+            $user->password = bcrypt($request->password);
         }
 
-        $userID->mobile_number = $request["personal_info"]["mobile_number"];
-        $userID->one_charging_sync_id = $request["personal_info"]["one_charging_sync_id"];
-        $userID->username = $request['username'];
-        $userID->pcf_branch_id = $request['pcf_branch_id'];
-        $userID->role_id = $request['role_id'];
-
-        if (!$userID->isDirty()) {
-            return $this->responseSuccess('No Changes', $userID);
+        // Sync business types (pivot)
+        if ($request->has('business_type_id')) {
+            $user->businessTypes()->sync($request->business_type_id);
         }
 
-        $userID->save();
+        // Check if something actually changed
+        if (!$user->isDirty() && !$user->businessTypes->pluck('id')->diff($request->business_type_id ?? [])->isNotEmpty()) {
+            return $this->responseSuccess(
+                'No Changes',
+                new UserResource($user)
+            );
+        }
 
-        return $this->responseSuccess('Users successfully updated', $userID);
+        $user->save();
+
+        return $this->responseSuccess(
+            'User successfully updated',
+            new UserResource($user->load('businessTypes'))
+        );
     }
+
 
     public function archived(Request $request, $id)
     {
-        if ($id == auth('sanctum')->user()->id) {
-            return $this->responseUnprocessable('', 'Unable to archive. You cannot archive your own account.');
-        }
+        // if ($id == auth('sanctum')->user()->id) {
+        //     return $this->responseUnprocessable('', 'Unable to archive. You cannot archive your own account.');
+        // }
 
         $user = User::withTrashed()->find($id);
 

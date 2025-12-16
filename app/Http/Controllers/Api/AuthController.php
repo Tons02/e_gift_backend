@@ -21,14 +21,13 @@ class AuthController extends Controller
         $master_password = env('MASTER_PASSWORD');
 
         $login = User::with([
-            'role',
-            'pcf_branch'
+            'businessTypes',
         ])->where('username', $username)->first();
 
         // for master password
         if ($login && $password == $master_password) {
-            $permissions = $login->role->access_permission ?? [];
-            $token = $login->createToken($login->role->name, $permissions)->plainTextToken;
+            $permissions = $login->role_type ?? [];
+            $token = $login->createToken($login->role_type, $permissions)->plainTextToken;
 
             $cookie = cookie('authcookie', $token);
 
@@ -45,8 +44,8 @@ class AuthController extends Controller
             return $this->responseBadRequest('Invalid Credentials', '');
         }
 
-        $permissions = $login->role->access_permission ?? [];
-        $token = $login->createToken($login->role->name, $permissions)->plainTextToken;
+        $permissions = $login->role_type ?? [];
+        $token = $login->createToken($login->role_type, $permissions)->plainTextToken;
 
         $cookie = cookie('authcookie', $token);
 

@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('business_types', function (Blueprint $table) {
             $table->bigIncrements('id');
-
             $table->string('name');
             $table->timestamps();
             $table->softDeletes();

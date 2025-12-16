@@ -52,5 +52,13 @@ class User extends Authenticatable
         ];
     }
 
+    public function businessTypes()
+    {
+        return $this->belongsToMany(
+            BusinessType::class,
+            'users_business_types'
+        );
+    }
+
     protected string $default_filters = UserFilter::class;
 }

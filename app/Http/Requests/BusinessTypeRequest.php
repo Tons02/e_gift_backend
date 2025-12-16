@@ -11,7 +11,7 @@ class BusinessTypeRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,13 @@ class BusinessTypeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            "name" => [
+                "required",
+                "string",
+                $this->route()->business_type
+                    ? "unique:business_types,name," . $this->route()->business_type
+                    : "unique:business_types,name",
+            ],
         ];
     }
 }
