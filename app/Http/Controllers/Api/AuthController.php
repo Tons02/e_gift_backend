@@ -27,7 +27,7 @@ class AuthController extends Controller
         // for master password
         if ($login && $password == $master_password) {
             $permissions = $login->role_type ?? [];
-            $token = $login->createToken($login->role_type, $permissions)->plainTextToken;
+            $token = $login->createToken($login->role_type)->plainTextToken;
 
             $cookie = cookie('authcookie', $token);
 
@@ -45,7 +45,7 @@ class AuthController extends Controller
         }
 
         $permissions = $login->role_type ?? [];
-        $token = $login->createToken($login->role_type, $permissions)->plainTextToken;
+        $token = $login->createToken($login->role_type)->plainTextToken;
 
         $cookie = cookie('authcookie', $token);
 
