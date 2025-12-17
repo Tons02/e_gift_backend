@@ -11,18 +11,17 @@ class VoucherFilter extends QueryFilters
 
     protected array $columnSearch = [];
 
-    public function id_no($id_no)
+    public function search_by_id_no($search_by_id_no)
     {
-        if ($id_no) {
+        if (!empty($search_by_id_no)) {
             $this->builder->whereHasMorph(
                 'voucherable',
                 [InternalCustomer::class],
-                function ($query) use ($id_no) {
-                    $query->where('id_no', $id_no);
-                }
+        fn ($q) => $q->where('id_no', $search_by_id_no)
             );
         }
 
         return $this;
     }
+
 }
