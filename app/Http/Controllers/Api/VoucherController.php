@@ -40,24 +40,28 @@ class VoucherController extends Controller
         return $this->responseSuccess('Voucher retrieved successfully', new VoucherResource($voucher));
     }
 
-    public function claimed_voucher(Request $request)
+    public function claimed_voucher(Request $request, $id)
     {
-        return $user_business_type = auth()->user()->businessTypes[0]->name;
+      $voucher = Voucher::where('id', $id)->first();
 
-        return  $voucher = Voucher::with('voucherable', 'business_type')->where('reference_number', $request->reference_number)
-            // ->whereIn('business_type_id', $user->businessTypes->pluck('id'))
-            ->where('status', 'Available')
-            ->first();
+        if (!$voucher) {
+            return $this->responseUnprocessable('', 'Invalid Voucher ID.');
+        }
 
-        if ($voucher->status === 'Claimed') {
+        if ($voucher->status !== 'Available') {
             return $this->responseUnprocessable('', 'Voucher already claimed.');
         }
 
-
+        if (!auth()->user()->businessTypes->contains('id', $voucher->business_type_id)) {
+            return $this->responseUnprocessable(
+                '',
+                'You cannot claim this voucher because it is not tagged to your business type.'
+            );
+        }
 
         $voucher->update([
             "status" => "Claimed",
-            "redeemed_by_user_id" => auth()->id,
+            "redeemed_by_user_id" => auth()->user()->id,
             "claimed_date" => Carbon::now(),
         ]);
 

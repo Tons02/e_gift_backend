@@ -24,4 +24,15 @@ class VoucherFilter extends QueryFilters
         return $this;
     }
 
+    public function business_type_id($business_type_id)
+    {
+        if (!$business_type_id) {
+            return $this;
+        }
+
+        $this->builder->where('business_type_id', $business_type_id);
+
+        return $this;
+    }
+
 }

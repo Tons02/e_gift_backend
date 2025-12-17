@@ -105,4 +105,9 @@ class Voucher extends Model
     {
         return $this->belongsTo(BusinessType::class, 'business_type_id', 'id')->withTrashed();
     }
+
+    public function redeemed_by_user()
+    {
+        return $this->belongsTo(User::class, 'redeemed_by_user_id', 'id')->withTrashed();
+    }
 }

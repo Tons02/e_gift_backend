@@ -35,7 +35,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Voucher Controller
     Route::get('voucher', [VoucherController::class, 'index']);
-    Route::patch('claim-voucher', [VoucherController::class, 'claimed_voucher']);
+    Route::patch('claim-voucher/{id}', [VoucherController::class, 'claimed_voucher']);
 
 
     Route::post('logout', [AuthController::class, 'logout']);

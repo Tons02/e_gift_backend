@@ -48,6 +48,14 @@ class VoucherResource extends JsonResource
                 'status' => $this->status,
                 'created_at' => $this->voucherable->created_at,
             ] : [],
+            'redeemed_by_user' => $this->redeemed_by_user_id ? [
+                'id' => $this->redeemed_by_user->id,
+                'name' => $this->redeemed_by_user->name,
+                'role_type' => $this->redeemed_by_user->role_type,
+                'username' => $this->redeemed_by_user->username,
+                'created_at' => $this->redeemed_by_user->created_at,
+            ] : [],
+            'claimed_date' => $this->claimed_date ? $this->claimed_date : null,
             'status' => $this->status,
             'created_at' => $this->created_at,
         ];
