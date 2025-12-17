@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthController::class, 'login']);
 
+Route::get('public-voucher-search',[VoucherController::class, 'public_voucher_search']);
+
 Route::middleware(['auth:sanctum'])->group(function () {
     // Business Type Controller
     Route::put('business-types-archived/{id}', [BusinessTypeController::class, 'archived']);
