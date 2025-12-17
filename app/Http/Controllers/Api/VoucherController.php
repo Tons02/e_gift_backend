@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exports\VoucherExport;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PublicVoucherSearchResource;
 use App\Http\Resources\VoucherResource;
@@ -9,6 +10,7 @@ use App\Models\Voucher;
 use Carbon\Carbon;
 use Essa\APIToolKit\Api\ApiResponse;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel; 
 
 class VoucherController extends Controller
 {
@@ -18,10 +20,25 @@ class VoucherController extends Controller
     {
         $status = $request->query('status');
         $pagination = $request->query('pagination');
+        $claimed_date_start = $request->query(key: 'claimed_date_start');
+        $claimed_date_end = $request->query('claimed_date_end');
+
 
         $Voucher = Voucher::with('voucherable', 'business_type')
             ->when($status === "inactive", function ($query) {
                 $query->onlyTrashed();
+            })
+            ->when($status === "inactive", function ($query) { // claimed_date_start claimed_date_end use this when present  
+                $query->onlyTrashed();
+            })
+              // claimed date range
+            ->when($claimed_date_start, function ($query) use ($claimed_date_start, $claimed_date_end) {
+                $start = Carbon::parse($claimed_date_start)->startOfDay();
+                $end = $claimed_date_end
+                    ? Carbon::parse($claimed_date_end)->endOfDay()
+                    : Carbon::now()->endOfDay();
+
+                $query->whereBetween('claimed_date', [$start, $end]);
             })
             ->orderBy('created_at', 'desc')
             ->useFilters()
@@ -59,7 +76,28 @@ class VoucherController extends Controller
         } else {
             $Voucher = PublicVoucherSearchResource::collection($Voucher);
         }
-        return $this->responseSuccess('Voucher display successfully', $Voucher);
+        return $this->responseSuccess('Public Voucher Search display successfully', $Voucher);
+    }
+
+    public function public_external_employee_voucher_search(Request $request)
+    {
+        $status = $request->query('status');
+        $pagination = $request->query('pagination');
+
+        $Voucher = Voucher::with('voucherable', 'business_type')
+            ->when($status === "inactive", function ($query) {
+                $query->onlyTrashed();
+            })
+            ->orderBy('created_at', 'desc')
+            ->useFilters()
+            ->dynamicPaginate();
+
+        if (!$pagination) {
+            PublicVoucherSearchResource::collection($Voucher);
+        } else {
+            $Voucher = PublicVoucherSearchResource::collection($Voucher);
+        }
+        return $this->responseSuccess('Public Voucher Search display successfully', $Voucher);
     }
 
     public function claimed_voucher(Request $request, $id)
@@ -88,5 +126,53 @@ class VoucherController extends Controller
         ]);
 
         return $this->responseSuccess('Voucher claimed successfully', $voucher);
+    }
+
+    public function export_voucher(Request $request)
+    {
+        // Validate the request
+        $request->validate([
+            'claimed_date_start' => 'nullable|date',
+            'claimed_date_end' => 'nullable|date',
+            'filter_status' => 'nullable|string',
+            'status' => 'nullable|string',
+            'page' => 'nullable|integer',
+            'per_page' => 'nullable|integer',
+        ]);
+
+        // Build the query
+         $query = Voucher::with([
+            'business_type',
+            'voucherable',
+            'redeemed_by_user'
+        ]);
+
+        // Apply claimed date range filter
+        if ($request->has('claimed_date_start') && $request->claimed_date_start) {
+            $query->where('claimed_date', '>=', $request->claimed_date_start);
+        }
+
+        if ($request->has('claimed_date_end') && $request->claimed_date_end) {
+            $query->where('claimed_date', '<=', $request->claimed_date_end);
+        }
+
+        // Apply filter_status (voucher status like Available, Redeemed, etc.)
+        if ($request->has('filter_status') && $request->filter_status) {
+            $query->where('status', $request->filter_status);
+        }
+       
+         $vouchers = $query->get();
+
+        // Use claimed_date_end as target date, or default to now
+        $targetDate = $request->input('claimed_date_end', now());
+
+        // Generate filename with timestamp
+        $filename = 'vouchers_export_' . Carbon::now()->format('Y_m_d_His') . '.xlsx';
+
+        // Export to Excel
+        return Excel::download(
+            new VoucherExport($vouchers, $targetDate),
+            $filename
+        );
     }
 }

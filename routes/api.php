@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('login', [AuthController::class, 'login']);
 
 Route::get('public-voucher-search',[VoucherController::class, 'public_voucher_search']);
+Route::get('public-external-employee-voucher-search',[VoucherController::class, 'public_external_employee_voucher_search']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     // Business Type Controller
@@ -38,6 +39,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Voucher Controller
     Route::get('voucher', [VoucherController::class, 'index']);
     Route::patch('claim-voucher/{id}', [VoucherController::class, 'claimed_voucher']);
+    Route::get('export-voucher', [VoucherController::class, 'export_voucher']);
 
 
     Route::post('logout', [AuthController::class, 'logout']);
