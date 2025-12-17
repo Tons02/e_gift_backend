@@ -4,14 +4,14 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class EmployeeRequest extends FormRequest
+class InternalRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        return false;
     }
 
     /**
@@ -22,12 +22,7 @@ class EmployeeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_no' => 'required|string|unique:employees,id_no,' . $this->route('employee'),
-            'first_name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'suffix' => 'nullable|string|max:50',
-            'birth_date' => 'required|date|before:date',
+            //
         ];
     }
 }

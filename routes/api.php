@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BusinessTypeController;
+use App\Http\Controllers\Api\ExternalController;
+use App\Http\Controllers\Api\InternalController;
+use App\Http\Controllers\Api\OneChargingController;
 use App\Http\Controllers\Api\UserController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\VoucherController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -14,9 +17,26 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('business-types-archived/{id}', [BusinessTypeController::class, 'archived']);
     Route::resource("business-types", BusinessTypeController::class);
 
+    // One Charging Controller
+    Route::resource("one-charging", OneChargingController::class);
+
     // User Controller
     Route::put('user-archived/{id}', [UserController::class, 'archived']);
     Route::resource("user", UserController::class);
+
+    // Internal Controller
+    Route::put('internal-customer-archived/{id}', [InternalController::class, 'archived']);
+    Route::resource("internal-customer", InternalController::class);
+
+    // External Controller
+    Route::put('external-customer-archived/{id}', [ExternalController::class, 'archived']);
+    Route::resource("external-customer", ExternalController::class);
+
+
+    // Voucher Controller
+    Route::get('voucher', [VoucherController::class, 'index']);
+    Route::patch('claim-voucher', [VoucherController::class, 'claimed_voucher']);
+
 
     Route::post('logout', [AuthController::class, 'logout']);
 });

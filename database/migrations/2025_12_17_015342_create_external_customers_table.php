@@ -11,15 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('claim_vouchers', function (Blueprint $table) {
+        Schema::create('external_customers', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('reference_no');
-
-            $table->foreignId('business_type_id')->constrained();
-            $table->foreignId('employee_id')->constrained();
-            $table->foreignId('claimed_by')->constrained('users');
-
-            $table->date('claim_date');
+            $table->string('name');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -30,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('claim_vouchers');
+        Schema::dropIfExists('external_customers');
     }
 };

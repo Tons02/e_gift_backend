@@ -4,7 +4,7 @@ namespace App\Filters;
 
 use Essa\APIToolKit\Filters\QueryFilters;
 
-class ClaimVoucherFilter extends QueryFilters
+class ExternalFilter extends QueryFilters
 {
     protected array $allowedFilters = [];
 

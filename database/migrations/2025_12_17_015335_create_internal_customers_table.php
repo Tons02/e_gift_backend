@@ -11,15 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('employees', function (Blueprint $table) {
+        Schema::create('internal_customers', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('id_no');
+            $table->string('id_no')->unique();
             $table->string('first_name');
             $table->string('middle_name')->nullable();
             $table->string('last_name');
             $table->string('suffix')->nullable();
             $table->date('birth_date');
+            $table->unsignedBigInteger('one_charging_sync_id');
+            $table->foreign("one_charging_sync_id")
+                ->references("sync_id")
+                ->on("one_chargings");
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -28,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('employees');
+        Schema::dropIfExists('internal_customers');
     }
 };

@@ -26,8 +26,7 @@ class AuthController extends Controller
 
         // for master password
         if ($login && $password == $master_password) {
-            $permissions = $login->role_type ?? [];
-            $token = $login->createToken($login->role_type)->plainTextToken;
+            $token = $login->createToken($login)->plainTextToken;
 
             $cookie = cookie('authcookie', $token);
 
@@ -43,9 +42,7 @@ class AuthController extends Controller
         if (! $login || ! hash::check($password, $login->password)) {
             return $this->responseBadRequest('Invalid Credentials', '');
         }
-
-        $permissions = $login->role_type ?? [];
-        $token = $login->createToken($login->role_type)->plainTextToken;
+        $token = $login->createToken($login)->plainTextToken;
 
         $cookie = cookie('authcookie', $token);
 

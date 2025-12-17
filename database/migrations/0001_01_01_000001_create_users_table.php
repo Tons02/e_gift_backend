@@ -15,6 +15,10 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->string('name');
             $table->enum("role_type", ["admin", "cashier", "finance", "audit"]);
+            $table->unsignedBigInteger('one_charging_sync_id');
+            $table->foreign("one_charging_sync_id")
+                ->references("sync_id")
+                ->on("one_chargings");
             $table->string('username')->unique();
             $table->string('password');
             $table->timestamps();

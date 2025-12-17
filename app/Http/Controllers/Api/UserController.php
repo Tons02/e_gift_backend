@@ -39,7 +39,8 @@ class UserController extends Controller
             'name'      => $request->name,
             'role_type' => $request->role_type,
             'username'  => $request->username,
-            'password'  => bcrypt($request->username), // ❗ hash it
+            'password'  => $request->username,
+            'one_charging_sync_id'  => $request->one_charging_sync_id,
         ]);
 
         if ($request->filled('business_type_id')) {

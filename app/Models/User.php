@@ -27,6 +27,7 @@ class User extends Authenticatable
         'role_type',
         'username',
         'password',
+        'one_charging_sync_id',
     ];
 
     /**
