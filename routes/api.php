@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthController::class, 'login']);
 
-Route::get('public-voucher-search',[VoucherController::class, 'public_voucher_search']);
-Route::get('public-external-employee-voucher-search',[VoucherController::class, 'public_external_employee_voucher_search']);
+Route::get('public-voucher-search', [VoucherController::class, 'public_voucher_search']);
+Route::get('public-external-employee-voucher-search', [VoucherController::class, 'public_external_employee_voucher_search']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     // Business Type Controller
@@ -29,6 +29,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Internal Controller
     Route::put('internal-customer-archived/{id}', [InternalController::class, 'archived']);
+    Route::get('export-internal-customer-template', [InternalController::class, 'export_internal_customer_template']);
+    Route::get('internal-customer-archived/{id}', [InternalController::class, 'archived']);
     Route::resource("internal-customer", InternalController::class);
 
     // External Controller
@@ -38,6 +40,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Voucher Controller
     Route::get('voucher', [VoucherController::class, 'index']);
+    Route::get('cashier-voucher-search', [VoucherController::class, 'cashier_voucher_search']);
     Route::patch('claim-voucher/{id}', [VoucherController::class, 'claimed_voucher']);
     Route::get('export-voucher', [VoucherController::class, 'export_voucher']);
 

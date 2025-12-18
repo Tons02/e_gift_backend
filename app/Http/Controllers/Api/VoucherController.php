@@ -10,7 +10,7 @@ use App\Models\Voucher;
 use Carbon\Carbon;
 use Essa\APIToolKit\Api\ApiResponse;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel; 
+use Maatwebsite\Excel\Facades\Excel;
 
 class VoucherController extends Controller
 {
@@ -28,10 +28,10 @@ class VoucherController extends Controller
             ->when($status === "inactive", function ($query) {
                 $query->onlyTrashed();
             })
-            ->when($status === "inactive", function ($query) { // claimed_date_start claimed_date_end use this when present  
+            ->when($status === "inactive", function ($query) { // claimed_date_start claimed_date_end use this when present
                 $query->onlyTrashed();
             })
-              // claimed date range
+            // claimed date range
             ->when($claimed_date_start, function ($query) use ($claimed_date_start, $claimed_date_end) {
                 $start = Carbon::parse($claimed_date_start)->startOfDay();
                 $end = $claimed_date_end
@@ -100,9 +100,45 @@ class VoucherController extends Controller
         return $this->responseSuccess('Public Voucher Search display successfully', $Voucher);
     }
 
+    public function cashier_voucher_search(Request $request)
+    {
+        $status = $request->query('status');
+        $pagination = $request->query('pagination');
+
+        $query = Voucher::with('voucherable', 'business_type')
+            ->when($status === "inactive", function ($query) {
+                $query->onlyTrashed();
+            })
+            ->orderBy('created_at', 'desc')
+            ->useFilters();
+
+        // ✅ If pagination is disabled → return SINGLE OBJECT
+        if (!$pagination) {
+            $voucher = $query->first(); // or firstOrFail()
+
+            if (!$voucher) {
+                return $this->responseUnprocessable('', 'No voucher found');
+            }
+
+            return $this->responseSuccess(
+                'Cashier Single Search display successfully',
+                new PublicVoucherSearchResource($voucher)
+            );
+        }
+
+        // ✅ If pagination is enabled → return COLLECTION
+        $vouchers = $query->dynamicPaginate();
+
+        return $this->responseSuccess(
+            'Public Voucher Search display successfully',
+            PublicVoucherSearchResource::collection($vouchers)
+        );
+    }
+
+
     public function claimed_voucher(Request $request, $id)
     {
-      $voucher = Voucher::where('id', $id)->first();
+        $voucher = Voucher::where('id', $id)->first();
 
         if (!$voucher) {
             return $this->responseUnprocessable('', 'Invalid Voucher ID.');
@@ -130,18 +166,7 @@ class VoucherController extends Controller
 
     public function export_voucher(Request $request)
     {
-        // Validate the request
-        $request->validate([
-            'claimed_date_start' => 'nullable|date',
-            'claimed_date_end' => 'nullable|date',
-            'filter_status' => 'nullable|string',
-            'status' => 'nullable|string',
-            'page' => 'nullable|integer',
-            'per_page' => 'nullable|integer',
-        ]);
-
-        // Build the query
-         $query = Voucher::with([
+        $query = Voucher::with([
             'business_type',
             'voucherable',
             'redeemed_by_user'
@@ -160,8 +185,12 @@ class VoucherController extends Controller
         if ($request->has('filter_status') && $request->filter_status) {
             $query->where('status', $request->filter_status);
         }
-       
-         $vouchers = $query->get();
+
+        if ($request->has('business_type_id') && $request->business_type_id) {
+            $query->where('business_type_id', $request->business_type_id);
+        }
+
+        $vouchers = $query->get();
 
         // Use claimed_date_end as target date, or default to now
         $targetDate = $request->input('claimed_date_end', now());

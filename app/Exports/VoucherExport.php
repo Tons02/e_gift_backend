@@ -45,8 +45,8 @@ class VoucherExport implements FromCollection, WithHeadings, WithMapping, WithSt
             'Amount',
             'Business Type',
             'Customer Type',
-            'Customer Name',
             'ID Number',
+            'Customer Name',
             'One Charging Code',
             'One Charging Name',
             'Redeemed By',
@@ -80,7 +80,7 @@ class VoucherExport implements FromCollection, WithHeadings, WithMapping, WithSt
             $idNumber = $voucher->voucherable->id_no;
             $oneChargingCode = $voucher->voucherable->one_charging->code ?? '';
             $oneChargingName = $voucher->voucherable->one_charging->name ?? '';
-        } 
+        }
         // Check if external customer
         elseif ($voucher->voucherable && isset($voucher->voucherable->name)) {
             $customerType = 'External';
@@ -108,7 +108,7 @@ class VoucherExport implements FromCollection, WithHeadings, WithMapping, WithSt
     /**
      * Apply styles to the sheet
      */
-     public function styles(Worksheet $sheet)
+    public function styles(Worksheet $sheet)
     {
         $highestRow = $sheet->getHighestRow();
 
@@ -203,10 +203,10 @@ class VoucherExport implements FromCollection, WithHeadings, WithMapping, WithSt
             'C' => 12,  // Amount
             'D' => 20,  // Business Type
             'E' => 20,  // Customer Type
-            'G' => 20,  // ID Number
-            'F' => 35,  // Customer Name
+            'F' => 20,  // ID NUMBER
+            'G' => 45,  // Customer Name
             'H' => 30,  // One Charging Code
-            'I' => 40,  // One Charging Name
+            'I' => 50,  // One Charging Name
             'J' => 25,  // Redeemed By
             'K' => 20,  // Redeemed By Role
             'L' => 20,  // Claimed Date

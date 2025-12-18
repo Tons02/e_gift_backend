@@ -14,8 +14,9 @@ class PublicVoucherSearchResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-          return [
+        return [
             'id' => $this->id,
+            'reference_number' => $this->status === 'Claimed' ? $this->reference_number : null,
             'amount' => $this->amount,
             'business_types' => [
                 'id' => $this->business_type->id,

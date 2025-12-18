@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exports\InternalCustomerTemplateExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InternalCustomerRequest;
 use App\Models\InternalCustomer;
@@ -10,6 +11,7 @@ use Carbon\Carbon;
 use Essa\APIToolKit\Api\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class InternalController extends Controller
 {
@@ -128,5 +130,11 @@ class InternalController extends Controller
 
             return $this->responseSuccess('Internal Customer successfully archived', $internal_customer);
         }
+    }
+
+    public function export_internal_customer_template(Request $request)
+    {
+        $title = 'internal-customer-template.xlsx';
+        return Excel::download(new InternalCustomerTemplateExport, $title);
     }
 }
