@@ -121,7 +121,7 @@ class VoucherController extends Controller
             }
 
             return $this->responseSuccess(
-                'Cashier Single Search display successfully',
+                'Cashier Single External Customer Search display successfully',
                 new PublicVoucherSearchResource($voucher)
             );
         }
@@ -130,11 +130,45 @@ class VoucherController extends Controller
         $vouchers = $query->dynamicPaginate();
 
         return $this->responseSuccess(
-            'Public Voucher Search display successfully',
+            'Cashier Single External Customer Search display successfully',
             PublicVoucherSearchResource::collection($vouchers)
         );
     }
 
+    public function cashier_external_employee_voucher_search(Request $request)
+    {
+        $status = $request->query('status');
+        $pagination = $request->query('pagination');
+
+        $query = Voucher::with('voucherable', 'business_type')
+            ->when($status === "inactive", function ($query) {
+                $query->onlyTrashed();
+            })
+            ->orderBy('created_at', 'desc')
+            ->useFilters();
+
+        // ✅ If pagination is disabled → return SINGLE OBJECT
+        if (!$pagination) {
+            $voucher = $query->first(); // or firstOrFail()
+
+            if (!$voucher) {
+                return $this->responseUnprocessable('', 'No voucher found');
+            }
+
+            return $this->responseSuccess(
+                'Cashier Single External Customer Search display successfully',
+                new PublicVoucherSearchResource($voucher)
+            );
+        }
+
+        // ✅ If pagination is enabled → return COLLECTION
+        $vouchers = $query->dynamicPaginate();
+
+        return $this->responseSuccess(
+            'Cashier Single External Customer Search display successfully',
+            PublicVoucherSearchResource::collection($vouchers)
+        );
+    }
 
     public function claimed_voucher(Request $request, $id)
     {
@@ -161,7 +195,7 @@ class VoucherController extends Controller
             "claimed_date" => Carbon::now(),
         ]);
 
-        return $this->responseSuccess('Voucher claimed successfully', $voucher);
+        return $this->responseSuccess('Voucher claimed successfully',  new PublicVoucherSearchResource($voucher));
     }
 
     public function export_voucher(Request $request)
@@ -204,4 +238,6 @@ class VoucherController extends Controller
             $filename
         );
     }
+
+    public function import_internal_employee(Request $request) {}
 }

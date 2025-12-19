@@ -61,5 +61,10 @@ class User extends Authenticatable
         );
     }
 
+    public function one_charging()
+    {
+        return $this->belongsTo(OneCharging::class, 'one_charging_sync_id', 'sync_id')->withTrashed();
+    }
+
     protected string $default_filters = UserFilter::class;
 }

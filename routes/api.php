@@ -41,9 +41,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Voucher Controller
     Route::get('voucher', [VoucherController::class, 'index']);
     Route::get('cashier-voucher-search', [VoucherController::class, 'cashier_voucher_search']);
+    Route::get('cashier-external-employee-voucher-search', [VoucherController::class, 'cashier_external_employee_voucher_search']);
     Route::patch('claim-voucher/{id}', [VoucherController::class, 'claimed_voucher']);
     Route::get('export-voucher', [VoucherController::class, 'export_voucher']);
-
+    Route::post('import-internal-employee', [VoucherController::class, 'import_internal_employee']);
 
     Route::post('logout', [AuthController::class, 'logout']);
 });

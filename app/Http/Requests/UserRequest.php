@@ -37,6 +37,12 @@ class UserRequest extends FormRequest
                     ? "unique:users,username," . $this->route()->user
                     : "unique:users,username",
             ],
+            'one_charging_sync_id' => [
+                'required',
+                'integer',
+                'exists:one_chargings,sync_id',
+                'distinct'
+            ],
             "password" => ["sometimes", "required", "string", "min:4"],
             'business_type_id' => 'required|array',
             'business_type_id.*' => 'exists:business_types,id',
