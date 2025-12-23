@@ -50,10 +50,9 @@ class VoucherExport implements FromCollection, WithHeadings, WithMapping, WithSt
             'One Charging Code',
             'One Charging Name',
             'Redeemed By',
-            'Redeemed By Role',
+            'Claimed At',
             'Claimed Date',
             'Status',
-            'Created At',
         ];
     }
 
@@ -98,10 +97,10 @@ class VoucherExport implements FromCollection, WithHeadings, WithMapping, WithSt
             $oneChargingCode,
             $oneChargingName,
             $voucher->redeemed_by_user->name ?? '',
-            $voucher->redeemed_by_user->role_type ?? '',
-            $voucher->claimed_date ? Carbon::parse($voucher->claimed_date)->format('Y-m-d H:i:s') : '',
+            $voucher->redeemed_by_user->one_charging->location_name ?? '',
+            // 'secret',
+            $voucher->claimed_date ? Carbon::parse($voucher->claimed_date)->format('Y-m-d h:iA')  : '',
             $voucher->status,
-            $voucher->created_at ? Carbon::parse($voucher->created_at)->format('Y-m-d H:i:s') : '',
         ];
     }
 
@@ -113,7 +112,7 @@ class VoucherExport implements FromCollection, WithHeadings, WithMapping, WithSt
         $highestRow = $sheet->getHighestRow();
 
         // Header styling
-        $sheet->getStyle('A1:N1')->applyFromArray([
+        $sheet->getStyle('A1:M1')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'size' => 13, // Header font size
@@ -136,29 +135,14 @@ class VoucherExport implements FromCollection, WithHeadings, WithMapping, WithSt
             ],
         ]);
 
-        // Apply row colors and font
+        // Apply row colors and font - SIMPLE GREY/BLACK ZEBRA
         for ($row = 2; $row <= $highestRow; $row++) {
-            $claimedDate = $sheet->getCell('L' . $row)->getValue();
-            $status = $sheet->getCell('N' . $row)->getValue();
-
-            // Default zebra stripe
-            $bgColor = $row % 2 === 0 ? ExcelColors::ROW_EVEN_BG : ExcelColors::ROW_ODD_BG;
-            $textColor = ExcelColors::NEUTRAL_TEXT;
-
-            // Override colors based on status/date
-            if ($claimedDate && $this->isDatePassed($claimedDate)) {
-                $bgColor = ExcelColors::PASSED_DATE_BG;
-                $textColor = ExcelColors::PASSED_DATE_TEXT;
-            } elseif ($status === 'Available') {
-                $bgColor = ExcelColors::STATUS_AVAILABLE_BG;
-                $textColor = ExcelColors::STATUS_AVAILABLE_TEXT;
-            } elseif ($status === 'Redeemed') {
-                $bgColor = ExcelColors::STATUS_REDEEMED_BG;
-                $textColor = ExcelColors::STATUS_REDEEMED_TEXT;
-            }
+            // Simple zebra stripe - grey for even rows, white for odd rows
+            $bgColor = $row % 2 === 0 ? 'E0E0E0' : 'FFFFFF'; // Grey / White
+            $textColor = '000000'; // Black text for all rows
 
             // Apply styling
-            $sheet->getStyle('A' . $row . ':N' . $row)->applyFromArray([
+            $sheet->getStyle('A' . $row . ':M' . $row)->applyFromArray([
                 'fill' => [
                     'fillType' => Fill::FILL_SOLID,
                     'startColor' => ['rgb' => $bgColor],
@@ -175,13 +159,13 @@ class VoucherExport implements FromCollection, WithHeadings, WithMapping, WithSt
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
-                        'color' => ['rgb' => ExcelColors::BORDER_COLOR],
+                        'color' => ['rgb' => 'CCCCCC'], // Light grey borders
                     ],
                 ],
             ]);
 
             // Bold the status column
-            $sheet->getStyle('N' . $row)->getFont()->setBold(true);
+            $sheet->getStyle('M' . $row)->getFont()->setBold(true);
         }
 
         // Auto-height rows
@@ -208,10 +192,9 @@ class VoucherExport implements FromCollection, WithHeadings, WithMapping, WithSt
             'H' => 30,  // One Charging Code
             'I' => 50,  // One Charging Name
             'J' => 25,  // Redeemed By
-            'K' => 20,  // Redeemed By Role
-            'L' => 20,  // Claimed Date
+            'K' => 20,  // claimed at
+            'L' => 25,  // Claimed Date
             'M' => 15,  // Status
-            'N' => 20,  // Created At
         ];
     }
 

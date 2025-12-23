@@ -44,8 +44,9 @@ class UserRequest extends FormRequest
                 'distinct'
             ],
             "password" => ["sometimes", "required", "string", "min:4"],
-            'business_type_id' => 'required|array',
+            'business_type_id' => 'required|array|size:1',
             'business_type_id.*' => 'exists:business_types,id',
+
         ];
     }
 }

@@ -6,6 +6,9 @@ use App\Exports\VoucherExport;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PublicVoucherSearchResource;
 use App\Http\Resources\VoucherResource;
+use App\Imports\InternalCustomerImport;
+use App\Models\ExternalCustomer;
+use App\Models\InternalCustomer;
 use App\Models\Voucher;
 use Carbon\Carbon;
 use Essa\APIToolKit\Api\ApiResponse;
@@ -20,6 +23,7 @@ class VoucherController extends Controller
     {
         $status = $request->query('status');
         $pagination = $request->query('pagination');
+        $search = $request->query('search');
         $claimed_date_start = $request->query(key: 'claimed_date_start');
         $claimed_date_end = $request->query('claimed_date_end');
 
@@ -30,6 +34,34 @@ class VoucherController extends Controller
             })
             ->when($status === "inactive", function ($query) { // claimed_date_start claimed_date_end use this when present
                 $query->onlyTrashed();
+            })
+            ->when($search, function ($query) use ($search) {
+                // Search in voucher columns
+                $query->where(function ($query) use ($search) {
+                    foreach (['reference_number', 'amount'] as $column) {
+                        $query->orWhere($column, 'LIKE', "%{$search}%");
+                    }
+                });
+                $query->orWhereHasMorph(
+                    'voucherable',
+                    [InternalCustomer::class],
+                    function ($q) use ($search) {
+                        $q->where('id_no', 'LIKE', "%{$search}%")
+                            ->orWhere('first_name', 'LIKE', "%{$search}%")
+                            ->orWhere('middle_name', 'LIKE', "%{$search}%")
+                            ->orWhere('last_name', 'LIKE', "%{$search}%")
+                            ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name, suffix) LIKE ?", ["%{$search}%"]);
+                    }
+                );
+
+                // Search in ExternalCustomer (name)
+                $query->orWhereHasMorph(
+                    'voucherable',
+                    [ExternalCustomer::class],
+                    function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%");
+                    }
+                );
             })
             // claimed date range
             ->when($claimed_date_start, function ($query) use ($claimed_date_start, $claimed_date_end) {
@@ -198,21 +230,72 @@ class VoucherController extends Controller
         return $this->responseSuccess('Voucher claimed successfully',  new PublicVoucherSearchResource($voucher));
     }
 
+    public function import_internal_employee(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // Max 10MB
+        ]);
+
+        try {
+            $import = new InternalCustomerImport();
+            Excel::import($import, $request->file('file'));
+
+            $results = $import->getResults();
+
+            if ($results['error_count'] > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Import completed with errors',
+                    'data' => $results
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Import completed successfully',
+                'data' => $results
+            ], 200);
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $failures = $e->failures();
+            $errors = [];
+
+            foreach ($failures as $failure) {
+                $errors[] = [
+                    'row' => $failure->row(),
+                    'attribute' => $failure->attribute(),
+                    'errors' => $failure->errors(),
+                    'values' => $failure->values(),
+                ];
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $errors
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Import failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function export_voucher(Request $request)
     {
         $query = Voucher::with([
             'business_type',
             'voucherable',
-            'redeemed_by_user'
+            'redeemed_by_user.one_charging',
         ]);
 
         // Apply claimed date range filter
-        if ($request->has('claimed_date_start') && $request->claimed_date_start) {
-            $query->where('claimed_date', '>=', $request->claimed_date_start);
+        if ($request->has('claimed_date_start') && Carbon::parse($request->claimed_date_start)->startOfDay()) {
+            $query->where('claimed_date', '>=', Carbon::parse($request->claimed_date_start)->startOfDay());
         }
 
-        if ($request->has('claimed_date_end') && $request->claimed_date_end) {
-            $query->where('claimed_date', '<=', $request->claimed_date_end);
+        if ($request->has('claimed_date_end') && Carbon::parse($request->claimed_date_end)->endOfDay()) {
+            $query->where('claimed_date', '<=', Carbon::parse($request->claimed_date_end)->endOfDay());
         }
 
         // Apply filter_status (voucher status like Available, Redeemed, etc.)
@@ -238,6 +321,4 @@ class VoucherController extends Controller
             $filename
         );
     }
-
-    public function import_internal_employee(Request $request) {}
 }

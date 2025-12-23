@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BusinessTypeRequest;
 use App\Models\BusinessType;
+use App\Models\Voucher;
 use Essa\APIToolKit\Api\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -60,6 +61,12 @@ class BusinessTypeController extends Controller
 
         if (!$business_type) {
             return $this->responseUnprocessable('', 'Invalid id please check the id and try again.');
+        }
+
+        $vouchers = Voucher::where('business_type_id', $business_type->id)->get();
+
+        if ($vouchers->isNotEmpty()) {
+            return $this->responseUnprocessable('', 'Cannot Archived Business Type because it is associated with existing vouchers.');
         }
 
         if ($business_type->deleted_at) {

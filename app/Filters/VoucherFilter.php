@@ -10,15 +10,13 @@ class VoucherFilter extends QueryFilters
 {
     protected array $allowedFilters = [];
 
-    protected array $columnSearch = [];
-
     public function search_by_id_no($search_by_id_no)
     {
         if (!empty($search_by_id_no)) {
             $this->builder->whereHasMorph(
                 'voucherable',
                 [InternalCustomer::class],
-        fn ($q) => $q->where('id_no', $search_by_id_no)
+                fn($q) => $q->where('id_no', $search_by_id_no)
             );
         }
 
@@ -31,7 +29,7 @@ class VoucherFilter extends QueryFilters
             $this->builder->whereHasMorph(
                 'voucherable',
                 [ExternalCustomer::class],
-        fn ($q) => $q->where('name', $name)
+                fn($q) => $q->where('name', $name)
             );
         }
 
@@ -59,5 +57,4 @@ class VoucherFilter extends QueryFilters
 
         return $this;
     }
-
 }

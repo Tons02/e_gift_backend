@@ -32,6 +32,7 @@ implements FromCollection, WithHeadings, WithEvents, WithTitle, WithColumnWidths
         return [
             ['Internal Customer Importing Template'],
             [
+                'Voucher ID', // Added for updates
                 'ID Number',
                 'First Name',
                 'Middle Name',
@@ -69,7 +70,7 @@ implements FromCollection, WithHeadings, WithEvents, WithTitle, WithColumnWidths
                 /* =======================
                  * TITLE
                  * ======================= */
-                $columnCount = 12; // A–L
+                $columnCount = 13; // A–M (added one more column)
                 $mergeRange  = 'A1:' . chr(64 + $columnCount) . '1';
 
                 $mainSheet->mergeCells($mergeRange);
@@ -102,7 +103,7 @@ implements FromCollection, WithHeadings, WithEvents, WithTitle, WithColumnWidths
                 /* =======================
                  * HEADER STYLE
                  * ======================= */
-                $mainSheet->getStyle('A2:L2')->applyFromArray([
+                $mainSheet->getStyle('A2:M2')->applyFromArray([
                     'font' => [
                         'bold'  => true,
                         'size'  => 11,
@@ -142,7 +143,7 @@ implements FromCollection, WithHeadings, WithEvents, WithTitle, WithColumnWidths
                         ? ExcelColors::ROW_EVEN_BG
                         : ExcelColors::ROW_ODD_BG;
 
-                    $mainSheet->getStyle("A{$row}:L{$row}")->applyFromArray([
+                    $mainSheet->getStyle("A{$row}:M{$row}")->applyFromArray([
                         'fill' => [
                             'fillType'   => Fill::FILL_SOLID,
                             'startColor' => ['argb' => $bg],
@@ -176,23 +177,23 @@ implements FromCollection, WithHeadings, WithEvents, WithTitle, WithColumnWidths
                     $row++;
                 }
 
-                // Dropdown (G)
+                // Dropdown (H) - shifted from G
                 for ($r = 3; $r <= 2000; $r++) {
-                    $dv = $mainSheet->getCell("G{$r}")->getDataValidation();
+                    $dv = $mainSheet->getCell("H{$r}")->getDataValidation();
                     $dv->setType(DataValidation::TYPE_LIST);
                     $dv->setShowDropDown(true);
                     $dv->setFormula1("=OneChargingLookup!\$A\$2:\$A\$1000");
                 }
 
-                // Auto-fill ID (H) and Name (I)
+                // Auto-fill ID (I) and Name (J) - shifted from H and I
                 for ($r = 3; $r <= 2000; $r++) {
                     $mainSheet->setCellValue(
-                        "H{$r}",
-                        "=IFERROR(VLOOKUP(G{$r}, OneChargingLookup!A:B, 2, FALSE), \"\")"
+                        "I{$r}",
+                        "=IFERROR(VLOOKUP(H{$r}, OneChargingLookup!A:B, 2, FALSE), \"\")"
                     );
                     $mainSheet->setCellValue(
-                        "I{$r}",
-                        "=IFERROR(VLOOKUP(G{$r}, OneChargingLookup!A:C, 3, FALSE), \"\")"
+                        "J{$r}",
+                        "=IFERROR(VLOOKUP(H{$r}, OneChargingLookup!A:C, 3, FALSE), \"\")"
                     );
                 }
 
@@ -218,19 +219,19 @@ implements FromCollection, WithHeadings, WithEvents, WithTitle, WithColumnWidths
                     $row++;
                 }
 
-                // Dropdown (J)
+                // Dropdown (K) - shifted from J
                 for ($r = 3; $r <= 100; $r++) {
-                    $dv = $mainSheet->getCell("J{$r}")->getDataValidation();
+                    $dv = $mainSheet->getCell("K{$r}")->getDataValidation();
                     $dv->setType(DataValidation::TYPE_LIST);
                     $dv->setShowDropDown(true);
                     $dv->setFormula1("=BusinessTypeLookup!\$A\$2:\$A\$100");
                 }
 
-                // Auto-fill Business Type ID (K)
+                // Auto-fill Business Type ID (L) - shifted from K
                 for ($r = 3; $r <= 100; $r++) {
                     $mainSheet->setCellValue(
-                        "K{$r}",
-                        "=IFERROR(VLOOKUP(J{$r}, BusinessTypeLookup!A:B, 2, FALSE), \"\")"
+                        "L{$r}",
+                        "=IFERROR(VLOOKUP(K{$r}, BusinessTypeLookup!A:B, 2, FALSE), \"\")"
                     );
                 }
 
@@ -240,17 +241,21 @@ implements FromCollection, WithHeadings, WithEvents, WithTitle, WithColumnWidths
                  * FORMATS
                  * ======================= */
                 for ($r = 3; $r <= 100; $r++) {
-                    $mainSheet->getStyle("F{$r}")
+                    // Birth Date format (G) - shifted from F
+                    $mainSheet->getStyle("G{$r}")
                         ->getNumberFormat()->setFormatCode('yyyy-mm-dd');
 
-                    $mainSheet->getStyle("L{$r}")
+                    // Amount format (M) - shifted from L
+                    $mainSheet->getStyle("M{$r}")
                         ->getNumberFormat()->setFormatCode('#,##0');
                 }
 
                 /* =======================
                  * REQUIRED COLUMNS
                  * ======================= */
-                foreach (['A', 'B', 'D', 'F', 'G', 'J', 'L'] as $col) {
+                // Updated: B, C, E, G, H, K, M (shifted due to new Voucher ID column)
+                // Note: Voucher ID (A) is optional for new records, required for updates
+                foreach (['B', 'C', 'E', 'G', 'H', 'K', 'M'] as $col) {
                     $mainSheet->getStyle("{$col}2")->applyFromArray([
                         'font' => ['bold' => true],
                         'fill' => [
@@ -266,21 +271,22 @@ implements FromCollection, WithHeadings, WithEvents, WithTitle, WithColumnWidths
     public function columnWidths(): array
     {
         return [
-            'A' => 20,
-            'B' => 20,
-            'C' => 20,
-            'D' => 20,
-            'E' => 10,
-            'F' => 15,
+            'A' => 15, // Voucher ID (new)
+            'B' => 20, // ID Number
+            'C' => 20, // First Name
+            'D' => 20, // Middle Name
+            'E' => 20, // Last Name
+            'F' => 10, // Suffix
+            'G' => 15, // Birth Date
 
-            'G' => 35, // One Charging (dropdown)
-            'H' => 20, // One Charging ID
-            'I' => 40, // One Charging Name
+            'H' => 35, // One Charging (dropdown)
+            'I' => 20, // One Charging ID
+            'J' => 40, // One Charging Name
 
-            'J' => 30, // Business Type
-            'K' => 20, // Business Type ID
+            'K' => 35, // Business Type (dropdown)
+            'L' => 30, // Business Type ID
 
-            'L' => 15, // Amount
+            'M' => 15, // Amount
         ];
     }
 }

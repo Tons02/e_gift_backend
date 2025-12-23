@@ -8,5 +8,11 @@ class InternalFilter extends QueryFilters
 {
     protected array $allowedFilters = [];
 
-    protected array $columnSearch = [];
+    protected array $columnSearch = [
+        'id_no',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'suffix',
+    ];
 }
